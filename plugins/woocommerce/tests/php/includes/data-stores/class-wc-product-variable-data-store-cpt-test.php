@@ -1067,7 +1067,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$product   = WC_Helper_Product::create_variation_product();
 		$child_ids = $product->get_visible_children();
 
-		update_post_meta( reset( $child_ids ), '_weight', '1.5' );
+		update_post_meta( current( $child_ids ), '_weight', '1.5' );
 
 		$this->assertTrue( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_weight( $product ) );
 
@@ -1116,7 +1116,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$product   = WC_Helper_Product::create_variation_product();
 		$child_ids = $product->get_visible_children();
 
-		update_post_meta( reset( $child_ids ), '_weight', '0' );
+		update_post_meta( current( $child_ids ), '_weight', '0' );
 
 		$this->assertFalse( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_weight( $product ) );
 
@@ -1130,7 +1130,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$product   = WC_Helper_Product::create_variation_product();
 		$child_ids = $product->get_visible_children();
 
-		update_post_meta( reset( $child_ids ), '_length', '10' );
+		update_post_meta( current( $child_ids ), '_length', '10' );
 
 		$this->assertTrue( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_dimensions( $product ) );
 
@@ -1153,8 +1153,6 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 
 		foreach ( $child_ids as $child_id ) {
 			delete_post_meta( $child_id, '_length' );
-			delete_post_meta( $child_id, '_width' );
-			delete_post_meta( $child_id, '_height' );
 		}
 
 		$this->assertFalse( $data_store->child_has_dimensions( $product ) );
@@ -1181,7 +1179,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$product   = WC_Helper_Product::create_variation_product();
 		$child_ids = $product->get_visible_children();
 
-		update_post_meta( reset( $child_ids ), '_width', '5' );
+		update_post_meta( current( $child_ids ), '_width', '5' );
 
 		$this->assertTrue( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_dimensions( $product ) );
 
@@ -1195,7 +1193,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$product   = WC_Helper_Product::create_variation_product();
 		$child_ids = $product->get_visible_children();
 
-		update_post_meta( reset( $child_ids ), '_length', '0' );
+		update_post_meta( current( $child_ids ), '_length', '0' );
 
 		$this->assertFalse( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_dimensions( $product ) );
 
@@ -1212,8 +1210,8 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$data_store = new WC_Product_Variable_Data_Store_CPT();
 		$product    = WC_Helper_Product::create_variation_product();
 		$child_ids  = $product->get_children();
-		$variation  = wc_get_product( reset( $child_ids ) );
 
+		$variation  = wc_get_product( current( $child_ids ) );
 		$variation->set_stock_status( ProductStockStatus::ON_BACKORDER );
 		$variation->save();
 
@@ -1230,6 +1228,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	 */
 	public function test_child_has_stock_status_returns_false_when_no_children(): void {
 		$product = new WC_Product_Variable();
+		$product->set_stock_status( ProductStockStatus::IN_STOCK );
 		$product->save();
 
 		$this->assertFalse( ( new WC_Product_Variable_Data_Store_CPT() )->child_has_stock_status( $product, ProductStockStatus::IN_STOCK ) );
@@ -1257,6 +1256,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		foreach ( $child_ids as $child_id ) {
 			$this->assertSame( ProductStockStatus::OUT_OF_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
 		}
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1281,6 +1281,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		foreach ( $child_ids as $child_id ) {
 			$this->assertSame( ProductStockStatus::IN_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
 		}
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1305,6 +1306,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		foreach ( $child_ids as $child_id ) {
 			$this->assertSame( ProductStockStatus::IN_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
 		}
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1329,6 +1331,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		foreach ( $child_ids as $child_id ) {
 			$this->assertSame( ProductStockStatus::OUT_OF_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
 		}
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1487,7 +1490,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 			$variation->set_stock_status( ProductStockStatus::OUT_OF_STOCK );
 			$variation->save();
 		}
-		$variation = wc_get_product( reset( $child_ids ) );
+		$variation = wc_get_product( current( $child_ids ) );
 		$variation->set_stock_status( ProductStockStatus::ON_BACKORDER );
 		$variation->save();
 
