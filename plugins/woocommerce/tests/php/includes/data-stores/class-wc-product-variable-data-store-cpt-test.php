@@ -1345,25 +1345,20 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$child_ids     = $product->get_children();
 		$half          = intdiv( count( $child_ids ), 2 );
 		$managed_ids   = array_slice( $child_ids, 0, $half );
-		$unmanaged_ids = array_slice( $child_ids, $half );
 
-		foreach ( $managed_ids as $child_id ) {
-			update_post_meta( $child_id, '_manage_stock', 'yes' );
-			update_post_meta( $child_id, '_stock_status', ProductStockStatus::IN_STOCK );
-		}
-		foreach ( $unmanaged_ids as $child_id ) {
-			update_post_meta( $child_id, '_manage_stock', 'no' );
+		foreach ( $child_ids as $child_id ) {
+			$is_managed = in_array( $child_id, $managed_ids, true );
+			update_post_meta( $child_id, '_manage_stock', $is_managed ? 'yes' : 'no' );
 			update_post_meta( $child_id, '_stock_status', ProductStockStatus::IN_STOCK );
 		}
 
 		( new WC_Product_Variable_Data_Store_CPT() )->sync_managed_variation_stock_status( $product );
 
-		foreach ( $managed_ids as $child_id ) {
-			$this->assertSame( ProductStockStatus::IN_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
+		foreach ( $child_ids as $child_id ) {
+			$expected_status = in_array( $child_id, $managed_ids, true ) ? ProductStockStatus::IN_STOCK : ProductStockStatus::OUT_OF_STOCK;
+			$this->assertSame( $expected_status, get_post_meta( $child_id, '_stock_status', true ) );
 		}
-		foreach ( $unmanaged_ids as $child_id ) {
-			$this->assertSame( ProductStockStatus::OUT_OF_STOCK, get_post_meta( $child_id, '_stock_status', true ) );
-		}
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1380,6 +1375,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		( new WC_Product_Variable_Data_Store_CPT() )->sync_managed_variation_stock_status( $product );
 
 		$this->assertSame( array(), $product->get_children() );
+		$this->assertSame( ProductStockStatus::OUT_OF_STOCK, $product->get_stock_status() );
 
 		$product->delete();
 	}
@@ -1461,7 +1457,7 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 			$variation->set_stock_status( ProductStockStatus::OUT_OF_STOCK );
 			$variation->save();
 		}
-		$variation = wc_get_product( reset( $child_ids ) );
+		$variation = wc_get_product( current( $child_ids ) );
 		$variation->set_stock_status( ProductStockStatus::IN_STOCK );
 		$variation->save();
 
