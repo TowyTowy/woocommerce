@@ -1290,12 +1290,20 @@ class WC_Product_Variable_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	 * @testdox sync_managed_variation_stock_status does nothing when the parent does not manage stock.
 	 */
 	public function test_sync_managed_variation_stock_status_skips_when_parent_does_not_manage_stock(): void {
-		$product = WC_Helper_Product::create_variation_product();
+		$product   = WC_Helper_Product::create_variation_product();
+		$child_ids = $product->get_children();
+
+		// Save children as out of stock (updates lookup table) so WC computes the parent as out of stock.
+		foreach ( $child_ids as $child_id ) {
+			$variation = wc_get_product( $child_id );
+			$variation->set_stock_status( ProductStockStatus::OUT_OF_STOCK );
+			$variation->save();
+		}
 		$product->set_manage_stock( false );
 		$product->set_stock_status( ProductStockStatus::OUT_OF_STOCK );
 		$product->save();
 
-		$child_ids = $product->get_children();
+		// Now set children to in stock via raw postmeta — the method should ignore them since the parent does not manage stock.
 		foreach ( $child_ids as $child_id ) {
 			update_post_meta( $child_id, '_manage_stock', 'no' );
 			update_post_meta( $child_id, '_stock_status', ProductStockStatus::IN_STOCK );
