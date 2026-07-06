@@ -13,9 +13,17 @@ The main sources of truth are:
 
 The `@woocommerce/block-library` editor build intentionally bundles most WooCommerce package imports. That keeps the editor from enqueueing a long list of package scripts.
 
-`@woocommerce/entities` is the exception: it remains external in the editor build and is loaded through the `wc-entities` handle.
+The exceptions are package instances that must be shared with editor extensions or initialized exactly once:
+
+- `@woocommerce/block-data` remains external through the `wc-blocks-data-store` handle so WooCommerce Blocks data stores are registered once and shared with external checkout APIs.
+- `@woocommerce/blocks-checkout` remains external through the `wc-blocks-checkout` handle so checkout filters, slot/fill APIs, and checkout block registry helpers use the same package instance.
+- `@woocommerce/blocks-checkout-events` remains external through the `wc-blocks-checkout-events` handle so checkout lifecycle event subscribers and emitters use the same event emitter.
+- `@woocommerce/blocks-registry` remains external through the `wc-blocks-registry` handle so block, payment method, and extension registrations are stored in the same registries.
+- `@woocommerce/entities` remains external through the `wc-entities` handle so WooCommerce entity registration is shared in the editor.
 
 The standalone handles below must still be registered and emitted. They are public dependency targets for non-editor scripts and third-party consumers that explicitly enqueue or declare them.
+
+Package handles used as editor externals should be emitted by the core package build rather than the cart and checkout frontend build. That keeps editor dependencies from loading cart/checkout-only split chunks.
 
 ## Source locations
 
