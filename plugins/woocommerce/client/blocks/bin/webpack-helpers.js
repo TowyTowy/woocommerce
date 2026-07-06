@@ -7,6 +7,7 @@ const chalk = require( 'chalk' );
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const CHECK_CIRCULAR_DEPS = process.env.CHECK_CIRCULAR_DEPS || false;
 const ASSET_CHECK = process.env.ASSET_CHECK === 'true';
+const SHARED_EDITOR_STYLE_HANDLE = 'wc-block-library-style';
 
 // See also @woocommerce/dependency-extraction-webpack-plugin/assets/packages. It will backfill any missing
 // mapping here and any duplicates are because of switched between Woo and WordPress versions of the plugin.
@@ -50,11 +51,18 @@ const isWooPackageRequest = ( request ) =>
 const shouldBundleWooPackageInEditor = ( request ) =>
 	isWooPackageRequest( request ) && request !== '@woocommerce/entities';
 
+const getBlockJsonWithSharedEditorStyle = ( content ) => {
+	const metadata = JSON.parse( content.toString() );
+
+	if ( metadata.editorStyle ) {
+		metadata.editorStyle = SHARED_EDITOR_STYLE_HANDLE;
+	}
+
+	return `${ JSON.stringify( metadata, null, '\t' ) }\n`;
+};
+
 const getEditorPackageAliases = () => ( {
-	'@woocommerce/block-data': path.resolve(
-		__dirname,
-		`../assets/js/data`
-	),
+	'@woocommerce/block-data': path.resolve( __dirname, `../assets/js/data` ),
 	'@woocommerce/blocks-checkout': path.resolve(
 		__dirname,
 		`../packages/checkout`
@@ -154,10 +162,7 @@ const getAlias = ( options = {} ) => {
 			__dirname,
 			`../assets/js/${ pathPart }previews/`
 		),
-		'@woocommerce/types': path.resolve(
-			__dirname,
-			`../assets/js/types/`
-		),
+		'@woocommerce/types': path.resolve( __dirname, `../assets/js/types/` ),
 		'@woocommerce/utils': path.resolve( __dirname, `../assets/js/utils/` ),
 		'@woocommerce/entities': path.resolve(
 			__dirname,
@@ -298,6 +303,8 @@ module.exports = {
 	NODE_ENV,
 	CHECK_CIRCULAR_DEPS,
 	ASSET_CHECK,
+	SHARED_EDITOR_STYLE_HANDLE,
+	getBlockJsonWithSharedEditorStyle,
 	getAlias,
 	getEditorPackageAliases,
 	getResolve,
