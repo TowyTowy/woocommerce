@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Persist the drag-and-drop order of product variations by normalizing variation menu order after the posted values are saved instead of before, so newly added variations no longer reset the order or produce duplicate menu_order values.

@@ -472,7 +472,7 @@ class WC_Meta_Box_Product_Data {
 
 			$max_loop   = max( array_keys( wp_unslash( $_POST['variable_post_id'] ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$data_store = $parent->get_data_store();
-			$data_store->sort_all_product_variations( $parent->get_id() );
+
 			$new_variation_menu_order_id    = ! empty( $_POST['new_variation_menu_order_id'] ) ? wc_clean( wp_unslash( $_POST['new_variation_menu_order_id'] ) ) : false;
 			$new_variation_menu_order_value = ! empty( $_POST['new_variation_menu_order_value'] ) ? wc_clean( wp_unslash( $_POST['new_variation_menu_order_value'] ) ) : false;
 
@@ -599,6 +599,16 @@ class WC_Meta_Box_Product_Data {
 				do_action( 'woocommerce_save_product_variation', $variation_id, $i );
 				/* phpcs: enable */
 			}
+
+			/*
+			 * Normalize the menu order of every variation AFTER the posted values have been
+			 * applied above. Running this before the loop would re-sequence variations using
+			 * their stale database menu order (new variations default to a menu order of 0 and
+			 * therefore sort to the front), overwriting the order the merchant just set via
+			 * drag-and-drop and leaving duplicate menu_order values for variations that were
+			 * not part of the current save batch. See https://github.com/woocommerce/woocommerce/issues/63332.
+			 */
+			$data_store->sort_all_product_variations( $parent->get_id() );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
